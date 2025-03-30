@@ -29,8 +29,6 @@ Thruster::Thruster()
   m_rev_factor    = 0.3; 
 }
 
-Thruster::~Thruster() {};
-
 //---------------------------------------------------------
 // Procedure: setDriveMode()
 

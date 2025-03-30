@@ -20,7 +20,7 @@ class Thruster
 {
 public:
   Thruster();
-  ~Thruster();
+  ~Thruster() {};
 
   // SET functions:
   bool  setDriveMode(std::string drive_mode);
