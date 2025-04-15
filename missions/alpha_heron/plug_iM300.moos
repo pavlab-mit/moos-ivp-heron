@@ -20,7 +20,7 @@ ProcessConfig = iM300
 	drive_mode  = normal
 	ignore_msg  = $GPGLL, $GPGSV, $GPVTG, $GPZDA, $CPALT, $CPIMU
 	ignore_msg  = $CPNVR, $GPGST, $CPRCM, $GNGLL, $GNGSV, $GNVTG,
-	ignore_msg  = $GNZDA, $GLGSV, $GNGSA
+	ignore_msg  = $GNZDA, $GLGSV, $GNGSA, $GNTXT, $GPTXT
 	ignore_checksum_errors = true
 
 	max_appcast_events       = 8
