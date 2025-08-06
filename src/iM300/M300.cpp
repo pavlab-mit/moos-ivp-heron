@@ -607,6 +607,9 @@ void M300::readMessagesFromSocket()
     }
     else if(strBegins(msg, "$CPRBS"))
       handled = handleMsgCPRBS(msg);
+
+    else if(strBegins(msg, "$CPRCS"))
+      handled = handleMsgCPRCS(msg);
     
     else if(strBegins(msg, "$CPRCM")){
       if (m_publish_body_vel)
@@ -1168,6 +1171,55 @@ bool M300::handleMsgCPRBS(string msg)
   return(true);
 }
 
+
+//---------------------------------------------------------
+// Procedure: handleMsgCPRCS()
+//      Note: Proper NMEA format and checksum prior confirmed  
+//   Example: $CPRCS,1,2,3,4,5,6*HH<cr><lf>
+//   0 CPRCS
+//   1 [Timestamp]   Timestamp of the sentence.
+//   2 [RC Mode]     0 = not active, 3 = active
+//   3 [RC Throttle] PWM signal input from remote
+//   4 [RC Rotation] PWM signal input from remote
+//   5 [RC Enable]   PWM signal ?
+bool M300::handleMsgCPRCS(string msg)
+{
+  if(!strBegins(msg, "$CPRCS,"))
+    return(false);
+
+  // Remove the checksum info from end
+  rbiteString(msg, '*');
+  vector<string> flds = parseString(msg, ',');
+  if(flds.size() != 6) {
+    if(!m_ninja.getIgnoreCheckSum()) {
+      string warning = "Wrong field count:" + uintToString(flds.size());
+      return(reportBadMessage(msg, warning));
+    }
+  }
+
+  string rc_mode = flds[2];
+  if (rc_mode == "3"){
+    Notify("RC_CTRL_ENABLED", "true"); 
+  } else if (rc_mode == "0"){
+    Notify("RC_CTRL_ENABLED", "false"); 
+  }
+
+  string str_rc_throttle = flds[3]; 
+  if(!isNumber(str_rc_throttle))
+    return(reportBadMessage(msg, "Bad RC Throttle value"));
+  
+  double rc_throttle = atof(str_rc_throttle.c_str());
+  Notify("RC_THROTTLE", rc_throttle);
+
+  string str_rc_rotation = flds[4]; 
+  if(!isNumber(str_rc_rotation))
+    return(reportBadMessage(msg, "Bad RC Rotation value"));
+  
+  double rc_rotation = atof(str_rc_rotation.c_str());
+  Notify("RC_ROTATION", rc_rotation);
+
+  return(true); 
+}
 
 //---------------------------------------------------------
 // Procedure: handleMsgCPRCM()

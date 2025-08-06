@@ -50,6 +50,7 @@ protected: // App Specific functions
   bool handleMsgCPNVG(std::string);
   bool handleMsgCPNVG_heading(std::string);
   bool handleMsgCPRBS(std::string);
+  bool handleMsgCPRCS(std::string);
   bool handleMsgCPRCM(std::string);
   bool handleMsgCPNVR(std::string);
 
