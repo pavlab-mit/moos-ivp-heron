@@ -12,9 +12,10 @@ SET(SRC
 ADD_EXECUTABLE(iM300Health ${SRC})
 
 TARGET_LINK_LIBRARIES(iM300Health
-   ${MOOS_LIBRARIES}
-   apputil
-   mbutil
-   m
-   pthread)
+  ${MOOS_LIBRARIES}
+  geometry
+  apputil
+  mbutil
+  m
+  pthread)
 

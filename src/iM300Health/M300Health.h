@@ -28,6 +28,10 @@ class M300Health : public AppCastingMOOSApp
  protected:
    void registerVariables();
 
+   void possiblyPostVisuals(); 
+   void sendStatusVisuals(std::string color);
+   void clearStatusVisuals(); 
+
  private: // Configuration variables
    double m_stale_time;
    double m_max_heading_delta;
@@ -40,6 +44,9 @@ class M300Health : public AppCastingMOOSApp
 
  private: // State variables
    double m_nav_heading;
+   double m_nav_x;
+   double m_nav_y;
+   
    double m_nav_heading_last_msg_time;
    std::string m_nav_heading_aux;
    bool   m_stale_nav;
@@ -64,7 +71,11 @@ class M300Health : public AppCastingMOOSApp
    double m_ave_nav_speed_running_ave;
 
    double m_deviation_running_ave;
-   int m_number_of_faults_detected; 
+   int m_number_of_faults_detected;
+
+   bool m_sent_status_vis;
+   bool m_rc_control; 
+   
 
 };
 

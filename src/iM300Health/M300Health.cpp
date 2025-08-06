@@ -9,6 +9,7 @@
 #include "MBUtils.h"
 #include "ACTable.h"
 #include "M300Health.h"
+#include "XYCircle.h"
 
 using namespace std;
 
@@ -42,6 +43,12 @@ M300Health::M300Health()
   m_speed_est_deviation_thresh = 0.3;
   m_deviation_running_ave = 0.0;
   m_number_of_faults_detected = 0;
+
+  m_nav_x = 0;
+  m_nav_y = 0;
+
+  m_sent_status_vis = false;
+  m_rc_control      = false; 
   
 
 }
@@ -80,6 +87,11 @@ bool M300Health::OnNewMail(MOOSMSG_LIST &NewMail)
       m_nav_heading = dval;
       m_nav_heading_last_msg_time = mtime;
       m_nav_heading_aux = aux;
+
+    } else if(key == "NAV_X") {
+      m_nav_x = dval;
+    } else if(key == "NAV_Y") {
+      m_nav_y = dval;
        
     } else if(key == "GPS_HEADING") {
       m_gps_heading = dval;
@@ -97,7 +109,9 @@ bool M300Health::OnNewMail(MOOSMSG_LIST &NewMail)
     } else if(key == "NAV_SPEED_EST_AVE") {
       m_ave_nav_speed_vals.push_back(dval);
       m_ave_nav_speed_times.push_back( mtime);
-      
+    } else if(key == "RC_CTRL_ENABLED"){
+      if (!setBooleanOnString(m_rc_control, msg.GetString()))
+	reportRunWarning("Unhandled Mail: " + key);
     } else if(key != "APPCAST_REQ") // handled by AppCastingMOOSApp
        reportRunWarning("Unhandled Mail: " + key);
    }
@@ -121,6 +135,8 @@ bool M300Health::OnConnectToServer()
 bool M300Health::Iterate()
 {
   AppCastingMOOSApp::Iterate();
+
+  possiblyPostVisuals();
 
   // Check that messages are not stale
   m_stale_nav = ( (MOOSTime() - m_nav_heading_last_msg_time) >= m_stale_time );
@@ -242,12 +258,76 @@ void M300Health::registerVariables()
 {
   AppCastingMOOSApp::RegisterVariables();
   Register("NAV_HEADING", 0);
+  Register("NAV_X", 0);
+  Register("NAV_Y", 0);
   Register("GPS_HEADING", 0);
   Register("M300_BATT_VOLTAGE", 0);
   Register("NAV_SPEED", 0);
   Register("NAV_SPEED_EST_AVE",0);
+  Register("RC_CTRL_ENABLED", 0); 
 
 }
+
+
+//------------------------------------------------------------
+// Procedure:  possilbyPostVisuals()
+//             checks if 1) the battery is bellow the low thresh
+//             or 2) if the remote is on
+void M300Health::possiblyPostVisuals()
+{
+  if (m_batt_voltage <= m_low_batt_thresh){
+    sendStatusVisuals("red");  // highest priority is sending low batt
+  } else if (m_rc_control){
+    sendStatusVisuals("cyan"); // then notify if RC is on 
+  } else if (m_sent_status_vis){ 
+    clearStatusVisuals();      // clear if here and we previously posted
+  }
+  return; 
+}
+
+
+
+//------------------------------------------------------------
+// Procedure:  sendStatusVisuals()
+//             posts helpful visuals to pMarineViewer to show
+//             operators on shoreside when the RC control mode
+//             is active.
+
+void M300Health::sendStatusVisuals(std::string color)
+{
+  // build circle message
+  std::string label = m_host_community + "_Status"; 
+  XYCircle RC_control_marker(m_nav_x, m_nav_y, 6.0);
+  
+  RC_control_marker.set_color("edge",color);
+  RC_control_marker.set_label(label);
+  RC_control_marker.set_edge_size(3.0);
+  Notify("VIEW_CIRCLE", RC_control_marker.get_spec());
+
+  m_sent_status_vis = true;
+  
+  return; 
+  
+}
+
+//------------------------------------------------------------
+// Procedure:  clearStatusVisuals()
+//             clears any visualization that are no longer
+//             true
+
+void M300Health::clearStatusVisuals()
+{
+  // clear the existing visual
+  std::string label = m_host_community + "_Status";
+  XYCircle RC_control_marker_clear(0.0, 0.0, 6.0);
+
+  RC_control_marker_clear.set_label(label);
+  RC_control_marker_clear.set_active(false);
+  Notify("VIEW_CIRCLE", RC_control_marker_clear.get_spec());
+  m_sent_status_vis = false;
+}
+
+
 
 
 //------------------------------------------------------------
